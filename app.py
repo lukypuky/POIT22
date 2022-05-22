@@ -61,23 +61,20 @@ def background_thread(args):
                 namespace='/test') 
         elif btnV == 'stop':
             print("neide")
-#             if len(dataList)>0:
-#                 fuj = str(dataList).replace("'", "\"")
-#             
-#                 cursor = db.cursor()
-#             
-#                 query = "INSERT INTO senzor (temperature,humidity) VALUES ('%s','%s')" % (fuj)
-#             
-#                 cursor.execute(query)
-#                 db.commit()
-#             
-#                 fo = open("static/data.txt","a+")
-#                 fo.write("%s,%s\r\n" %fuj)
-#                 fo.close()
-#           
-#             dataList = []
-#             dataCounter = 0      
-#     db.close()
+            if len(dataList)>0:
+#                 print(dataList)
+                strDataList = str(dataList).replace("'", "\"")
+                cursor = db.cursor()
+                query = "INSERT INTO senzor (meranie) VALUES ('%s')" % (strDataList)
+                cursor.execute(query)
+                db.commit()
+             
+                fo = open("static/data.txt","a+")
+                fo.write("%s\r\n" %dataList)
+                fo.close()
+          
+                dataList = []    
+    db.close()
 
 @app.route('/')
 def hello():
