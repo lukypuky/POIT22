@@ -51,13 +51,15 @@ def background_thread(args):
             count += 1
             dataDict = {
                 "x": count,
-                "y": humidity}
+                "y": humidity,
+                "t": temperature}
             dataList.append(dataDict)
             
             print(humidity)
+            print(temperature)
                     
             socketio.emit('my_response',
-                {'data': humidity, 'count': count},
+                {'data': humidity, 'temp': temperature, 'count': count},
                 namespace='/test') 
         elif btnV == 'stop':
             print("neide")
@@ -92,7 +94,7 @@ def test_message(message):
 def disconnect_request():
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
-         {'data': 'Disconnected!', 'count': session['receive_count']})
+         {'data': 'Disconnected!', 'temp': 'Disconnected!', 'count': session['receive_count']})
     disconnect()
 
 @socketio.on('connect', namespace='/test')

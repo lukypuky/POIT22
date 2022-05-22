@@ -11,9 +11,9 @@
    <script src="static/gauge.min.js"></script>
    <script type="text/javascript" charset="utf-8">
      $(document).ready(function() {
-	  var x = new Array();
+      var x = new Array();
       var y = new Array();
-      var z = new Array();
+      var t = new Array();
       var trace;
       var layout;
       
@@ -60,6 +60,49 @@
       gauge.draw();
       gauge.value = "0";
       
+      var gauge2 = new RadialGauge({
+          renderTo: 'canvasID2',
+          width: 300,
+          height: 300,
+          units: "Teplota(°C)",
+          minValue: 0,
+          maxValue: 60,
+          majorTicks: [
+              "0",
+              "6",
+              "12",
+              "18",
+              "24",
+              "30",
+              "36",
+              "42",
+              "48",
+              "54",
+              "60"
+          ],
+          minorTicks: 2,
+          strokeTicks: true,
+          highlights: [
+              {
+                  "from": 48,
+                  "to": 60,
+                  "color": "rgba(200, 50, 50, .75)"
+              }
+          ],
+          colorPlate: "#fff",
+          borderShadowWidth: 0,
+          borders: false,
+          needleType: "arrow",
+          needleWidth: 2,
+          needleCircleSize: 7,
+          needleCircleOuter: true,
+          needleCircleInner: false,
+          animationDuration: 1500,
+          animationRule: "linear"
+      });
+      gauge2.draw();
+      gauge2.value = "0";
+      
       namespace = '/test';
       var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
 
@@ -67,29 +110,35 @@
         socket.emit('my_event', {data: 'I\'m connected!', value: 1}); });
 
       socket.on('my_response', function(msg) {
-        console.log(msg.data);
-        $('#log').append('Received #'+msg.count+': '+msg.data+'<br>').html(); 
+        $('#log').append('Hodnota #'+msg.count+': vlhkost: '+msg.data+ '%' +' teplota: '+msg.temp+ '°C <br>').html(); 
         gauge.value = msg.data; 
+	gauge2.value = msg.temp;
         x.push(parseFloat(msg.count));
         y.push(parseFloat(msg.data));
+	t.push(parseFloat(msg.temp));
         trace = {
             x: x,
             y: y,
-            name:'grafy',
-        };       
+            name:'Vlhkost (%)',
+        };   
+	trace2 = {
+            x: x,
+            y: t,
+            name:'Teplota (°C)',
+        };     
         layout = {
-          title: 'Data',
+          title: 'Namerana vlhkost/teplota',
           xaxis: {
-              title: 'x',
+              title: 'X',
           },
           yaxis: {
-              title: 'y',
+              title: 'Y',
           }
         };
-        console.log(trace);
-        var traces = new Array();
-        traces.push(trace);
-        Plotly.newPlot($('#plotdiv')[0], traces, layout); 
+    
+        var traces = [trace, trace2]
+
+        Plotly.newPlot('plotdiv', traces, layout); 
         });            
 
       $('form#emit').submit(function(event) {
@@ -119,11 +168,11 @@
       <ul>
         <li><a href="#tabs-1">Default</a></li>
         <li><a href="#tabs-2">Graf</a></li>
-        <li><a href="#tabs-3">Cifernik</a></li>
+        <li><a href="#tabs-3">Ciferniky</a></li>
       </ul>
       <div id="tabs-1">
           <h1>Baca Lukas POIT22 - Data</h1>
-			<h2>Send:</h2>
+			<h2>Poslat:</h2>
 			
 			<form id="emit" method="POST" action='#'>
 			  <input type="text" name="emit_value" id="emit_value" placeholder="Amplituda">
@@ -137,31 +186,32 @@
 			  <input type="submit" value="Disconnect">
 			</form> 
 			
-			<h2>Receive:</h2>
+			<h2>Prijate:</h2>
 			<div id="log"></div>
       </div>
       <div id="tabs-2">
          <h1>Baca Lukas POIT22 - Graf</h1>
-		  <h2>Send:</h2>
+		  <h2>Poslat:</h2>
 		  <form id="emit" method="POST" action='#'>
 			<input type="text" name="emit_value" id="emit_value" placeholder="Amplituda">
 			<input type="submit" value="Send">
 		  </form>
-		  <button id="buttonVal" type="submit" value="send">Send value</button>
+		  <button id="buttonVal" type="submit" value="send">Poslat hodnotu</button>
 		  <form id="disconnect" method="POST" action="#">
 			<input type="submit" value="Disconnect">
 		  </form> 
 		  <div id="plotdiv" style="width:600px;height:250px;"></div>
-		  <h2>Receive:</h2>
+		  <h2>Prijate:</h2>
 		  <div id="log"></div>
       </div>
       <div id="tabs-3">
-         <h1>Baca Lukas POIT22 - Cifernik</h1>
+         <h1>Baca Lukas POIT22 - Ciferniky</h1>
 		  <form id="disconnect" method="POST" action="#">
 			<input type="submit" value="Disconnect">
 		  </form> 
 		  <canvas id="canvasID"></canvas>
-		  <h2>Receive:</h2>
+		  <canvas id="canvasID2"></canvas>
+		  <h2>Prijate:</h2>
 		  <div id="log"></div>
       </div>
     </div>
