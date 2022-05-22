@@ -2,48 +2,82 @@ from threading import Lock
 from flask import Flask, render_template, session, request, jsonify, url_for
 from flask_socketio import SocketIO, emit, disconnect  
 import time
-import random
-import math
+import serial
+import MySQLdb 
+import configparser as ConfigParser
 
 async_mode = None
 
 app = Flask(__name__)
 
+config = ConfigParser.ConfigParser()
+config.read('config.cfg')
+myhost = config.get('mysqlDB', 'host')
+myuser = config.get('mysqlDB', 'user')
+mypasswd = config.get('mysqlDB', 'passwd')
+mydb = config.get('mysqlDB', 'db')
+
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode=async_mode)
 thread = None
-thread_lock = Lock() 
+thread_lock = Lock()
 
+ser = serial.Serial("/dev/ttyACM0", 9600)
+ser.baudrate=9600
 
 def background_thread(args):
-    count = 0    
-    dataList = []          
+    count = 0
+    dataList = []
+    db = MySQLdb.connect(host=myhost,user=myuser,passwd=mypasswd,db=mydb) 
     while True:
-        if args:
-          A = dict(args).get('A')
-          btnV = dict(args).get('btn_value')
-        else:
-          A = 1
-          btnV = 'null'
-          sliderV = 0 
-        #print(A)
-        print(args)  
-        socketio.sleep(2)
-        count += 1
-        #prem = random.random()
-        dataDict = {
-          "t": time.time(),
-          "x": count,
-          "y": float(A)*math.sin(count/10)
-          }
-        dataList.append(dataDict)
-        #if len(dataList)>0:
-        #  print(str(dataList))
-        #  print(str(dataList).replace("'", "\""))
-        socketio.emit('my_response',
-                      {'data': float(A)*math.sin(count/10), 'count': count},
-                      namespace='/test') 
+        read_ser = ser.readline().decode()
 
+        values = read_ser.split(",")
+        humidity = float(values[0])
+        temperature = float(values[1])
+        
+        if args:
+            A = dict(args).get('A')
+            btnV = dict(args).get('btn_value')
+        else:
+            A = 1
+            btnV = 'null'
+            
+        btnV = dict(args).get('btn_value') 
+        socketio.sleep(2)
+        
+        if btnV == 'start':
+            print("ide")
+            count += 1
+            dataDict = {
+                "x": count,
+                "y": humidity}
+            dataList.append(dataDict)
+            
+            print(humidity)
+                    
+            socketio.emit('my_response',
+                {'data': humidity, 'count': count},
+                namespace='/test') 
+        elif btnV == 'stop':
+            print("neide")
+#             if len(dataList)>0:
+#                 fuj = str(dataList).replace("'", "\"")
+#             
+#                 cursor = db.cursor()
+#             
+#                 query = "INSERT INTO senzor (temperature,humidity) VALUES ('%s','%s')" % (fuj)
+#             
+#                 cursor.execute(query)
+#                 db.commit()
+#             
+#                 fo = open("static/data.txt","a+")
+#                 fo.write("%s,%s\r\n" %fuj)
+#                 fo.close()
+#           
+#             dataList = []
+#             dataCounter = 0      
+#     db.close()
 
 @app.route('/')
 def hello():
@@ -55,10 +89,7 @@ def graphlive():
 
 @socketio.on('my_event', namespace='/test')
 def test_message(message):   
-#    session['receive_count'] = session.get('receive_count', 0) + 1 
     session['A'] = message['value']    
-#    emit('my_response',
-#         {'data': message['value'], 'count': session['receive_count']})
  
 @socketio.on('disconnect_request', namespace='/test')
 def disconnect_request():
@@ -73,20 +104,28 @@ def test_connect():
     with thread_lock:
         if thread is None:
             thread = socketio.start_background_task(target=background_thread, args=session._get_current_object())
-#    emit('my_response', {'data': 'Connected', 'count': 0})
 
-@socketio.on('click_event', namespace='/test')
+@socketio.on('click_eventStart', namespace='/test')
 def db_message(message):   
-    session['btn_value'] = message['value']    
+    session['btn_value'] = 'start'
+
+@socketio.on('click_eventStop', namespace='/test')
+def db_message(message):   
+    session['btn_value'] = 'stop'
 
 @socketio.on('slider_event', namespace='/test')
-def slider_message(message):  
-    #print(message['value'])   
+def slider_message(message):   
     session['slider_value'] = message['value']  
 
 @socketio.on('disconnect', namespace='/test')
 def test_disconnect():
     print('Client disconnected', request.sid)
+    
+@app.route('/read/<string:num>', methods=['GET', 'POST'])
+def readmyfile(num):
+    fo = open("static/data.txt","r")
+    rows = fo.readlines()
+    return rows[int(num)-1]
 
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0", port=80, debug=True)
