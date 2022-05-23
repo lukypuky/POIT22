@@ -155,6 +155,104 @@
       $('form#disconnect').submit(function(event) {
           socket.emit('disconnect_request');
           return false; }); 
+      $('form#getDataFromDb').submit(function(event) {
+	  var layout = {
+          title: 'Namerana vlhkost/teplota',
+          xaxis: {
+            title: 'X',
+          },
+          yaxis: {
+            title: 'Y',
+          }};
+	  
+	  var $link = "dbdata/"+$('#valueDb').val();
+	  
+	  $.ajax({
+	  type: "POST",
+	  url: $link,
+	  success:function(data) 
+	  {  
+	    data = JSON.parse(data); 
+	    n = Object.keys(data).length;
+	    
+	    xx = [];
+	    yy = [];
+	    tt = [];
+	    
+	    for (var i=0; i< n; i++){
+	      xx.push(data[i].x);
+	      yy.push(data[i].y); 
+	      tt.push(data[i].t); 
+	    }
+          
+	    trace = {
+		x: xx,
+		y: yy,
+		name:'Vlhkost (%)',
+	    };   
+	    trace2 = {
+		x: xx,
+		y: tt,
+		name:'Teplota (°C)',
+	    };      
+        
+	    var traces = [trace, trace2]
+	    Plotly.newPlot('plotdiv2', traces, layout); 
+	  }
+	  }).done(function( o ) {
+	    // do something
+	  });    
+    
+      return false });
+      $('form#getDataFromFile').submit(function(event) {
+	  var layout = {
+          title: 'Namerana vlhkost/teplota',
+          xaxis: {
+            title: 'X',
+          },
+          yaxis: {
+            title: 'Y',
+          }};
+	  
+	  var $link = "read/"+$('#valueFile').val();
+	  
+	  $.ajax({
+	  type: "POST",
+	  url: $link,
+	  success:function(data) 
+	  { 
+	    data = JSON.parse(data); 
+	    n = Object.keys(data).length;
+	    
+	    xx = [];
+	    yy = [];
+	    tt = [];
+	    
+	    for (var i=0; i< n; i++){
+	      xx.push(data[i].x);
+	      yy.push(data[i].y); 
+	      tt.push(data[i].t); 
+	    }
+          
+	    trace = {
+		x: xx,
+		y: yy,
+		name:'Vlhkost (%)',
+	    };   
+	    trace2 = {
+		x: xx,
+		y: tt,
+		name:'Teplota (°C)',
+	    };      
+        
+	    var traces = [trace, trace2]
+	    Plotly.newPlot('plotdiv3', traces, layout); 
+	  }
+	  }).done(function( o ) {
+	    // do something
+	  });  
+      return false });
+	
       $( function() {
         $( "#tabs" ).tabs({
           event: "mouseover"
@@ -164,57 +262,72 @@
     </script>
  </head>
  <body>
-	 <div id="tabs">
-      <ul>
-        <li><a href="#tabs-1">Default</a></li>
-        <li><a href="#tabs-2">Graf</a></li>
-        <li><a href="#tabs-3">Ciferniky</a></li>
-      </ul>
-      <div id="tabs-1">
-          <h1>Baca Lukas POIT22 - Data</h1>
-			<h2>Poslat:</h2>
+ <div id="tabs">
+  <ul>
+    <li><a href="#tabs-1">Default</a></li>
+    <li><a href="#tabs-2">Graf</a></li>
+    <li><a href="#tabs-3">Ciferniky</a></li>
+    <li><a href="#tabs-4">Zobrazit data z DB</a></li>
+    <li><a href="#tabs-5">Zobrazit data zo suboru</a></li>
+  </ul>
+  <div id="tabs-1">
+    <h1>Baca Lukas POIT22 - Data</h1>
 			
-			<form id="emit" method="POST" action='#'>
-			  <input type="text" name="emit_value" id="emit_value" placeholder="Amplituda">
-			  <input type="submit" value="Send">
-			</form>
+    <form id="emit" method="POST" action='#'>
+      <input type="text" name="emit_value" id="emit_value" placeholder="Amplituda">
+      <input type="submit" value="Poslat">
+    </form>
 			
-			<button id="buttonValStart" type="submit" value="start">start</button>
-			<button id="buttonValStop" type="submit" value="stop">stop</button>
+    <button id="buttonValStart" type="submit" value="start">start</button>
+    <button id="buttonValStop" type="submit" value="stop">stop</button>
 			
-			<form id="disconnect" method="POST" action="#">
-			  <input type="submit" value="Disconnect">
-			</form> 
+    <form id="disconnect" method="POST" action="#">
+      <input type="submit" value="Disconnect">
+    </form> 
 			
-			<h2>Prijate:</h2>
-			<div id="log"></div>
-      </div>
-      <div id="tabs-2">
-         <h1>Baca Lukas POIT22 - Graf</h1>
-		  <h2>Poslat:</h2>
-		  <form id="emit" method="POST" action='#'>
-			<input type="text" name="emit_value" id="emit_value" placeholder="Amplituda">
-			<input type="submit" value="Send">
-		  </form>
-		  <button id="buttonVal" type="submit" value="send">Poslat hodnotu</button>
-		  <form id="disconnect" method="POST" action="#">
-			<input type="submit" value="Disconnect">
-		  </form> 
-		  <div id="plotdiv" style="width:600px;height:250px;"></div>
-		  <h2>Prijate:</h2>
-		  <div id="log"></div>
-      </div>
-      <div id="tabs-3">
-         <h1>Baca Lukas POIT22 - Ciferniky</h1>
-		  <form id="disconnect" method="POST" action="#">
-			<input type="submit" value="Disconnect">
-		  </form> 
-		  <canvas id="canvasID"></canvas>
-		  <canvas id="canvasID2"></canvas>
-		  <h2>Prijate:</h2>
-		  <div id="log"></div>
-      </div>
-    </div>
-  
+    <h2>Prijate:</h2>
+    <div id="log"></div>
+  </div>
+  <div id="tabs-2">
+    <h1>Baca Lukas POIT22 - Graf</h1>
+    <form id="emit" method="POST" action='#'>
+      <input type="text" name="emit_value" id="emit_value" placeholder="Amplituda">
+      <input type="submit" value="Send">
+    </form>
+    <button id="buttonVal" type="submit" value="send">Poslat hodnotu</button>
+    <form id="disconnect" method="POST" action="#">
+      <input type="submit" value="Disconnect">
+    </form> 
+    <div id="plotdiv" style="width:600px;height:250px;"></div>
+    <!-- <h2>Prijate:</h2>
+    <div id="log"></div> -->
+  </div>
+  <div id="tabs-3">
+    <h1>Baca Lukas POIT22 - Ciferniky</h1>
+    <form id="disconnect" method="POST" action="#">
+      <input type="submit" value="Disconnect">
+    </form> 
+    <canvas id="canvasID"></canvas>
+    <canvas id="canvasID2"></canvas>
+    <!-- <h2>Prijate:</h2>
+    <div id="log"></div> -->
+  </div>
+  <div id="tabs-4">
+    <h1>Baca Lukas POIT22 - Zobrazit data z DB</h1>
+    <form id="getDataFromDb" method="POST" action="#">
+      <input type="text" name="value" id="valueDb" placeholder="ID zaznamu v DB">
+      <input type="submit" value="Zobrazit data">
+    </form> 
+    <div id="plotdiv2" style="width:600px;height:250px;"></div>
+  </div>
+  <div id="tabs-5">
+    <h1>Baca Lukas POIT22 - Zobrazit data zo suboru</h1>
+    <form id="getDataFromFile" method="POST" action="#">
+      <input type="text" name="value" id="valueFile" placeholder="ID zaznamu v subore">
+      <input type="submit" value="Zobrazit data">
+    </form> 
+    <div id="plotdiv3" style="width:600px;height:250px;"></div>
+  </div>
+ </div>
  </body>
 </html>

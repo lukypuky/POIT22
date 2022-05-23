@@ -55,8 +55,8 @@ def background_thread(args):
                 "t": temperature}
             dataList.append(dataDict)
             
-            print(humidity)
-            print(temperature)
+#             print(humidity)
+#             print(temperature)
                     
             socketio.emit('my_response',
                 {'data': humidity, 'temp': temperature, 'count': count},
@@ -72,7 +72,7 @@ def background_thread(args):
                 db.commit()
              
                 fo = open("static/data.txt","a+")
-                fo.write("%s\r\n" %dataList)
+                fo.write("%s\r\n" %strDataList)
                 fo.close()
           
                 dataList = []    
@@ -96,6 +96,14 @@ def disconnect_request():
     emit('my_response',
          {'data': 'Disconnected!', 'temp': 'Disconnected!', 'count': session['receive_count']})
     disconnect()
+    
+@app.route('/dbdata/<string:num>', methods=['GET', 'POST'])
+def dbdata(num):
+  db = MySQLdb.connect(host=myhost,user=myuser,passwd=mypasswd,db=mydb)
+  cursor = db.cursor()
+  cursor.execute("SELECT meranie FROM senzor WHERE id=%s", num)
+  rv = cursor.fetchone()
+  return str(rv[0])
 
 @socketio.on('connect', namespace='/test')
 def test_connect():
@@ -124,7 +132,7 @@ def test_disconnect():
 def readmyfile(num):
     fo = open("static/data.txt","r")
     rows = fo.readlines()
-    return rows[int(num)-1]
+    return rows[int(num)]
 
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0", port=80, debug=True)
